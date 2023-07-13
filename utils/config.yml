@@ -1,0 +1,20 @@
+model_params:
+    experiment_name: cifar10_image_classification
+    model_dir: ./model/
+    seed: 42
+    dropout: 0.04
+data_loader:
+    classes: ['plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
+    args:
+        batch_size: 256
+        num_workers: 2
+        pin_memory: true
+optimizer : 
+    type: optim.Adam
+    args:
+        lr: 0.01
+        lr_max_epoch: 5
+training_params:
+    epochs: 24
+    pad: 4
+    momentum: 0.9
