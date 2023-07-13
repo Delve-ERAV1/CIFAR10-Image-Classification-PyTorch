@@ -1,6 +1,7 @@
 import torch
 import torch.nn.functional as F
 
+
 def test(model, device, test_loader, criterion, metric):
     model.eval()
     test_loss = 0
@@ -22,4 +23,3 @@ def test(model, device, test_loader, criterion, metric):
         100. * correct / len(test_loader.dataset)))
 
     test_acc.append(100. * correct / len(test_loader.dataset))
-    return correct / len(test_loader.dataset)
