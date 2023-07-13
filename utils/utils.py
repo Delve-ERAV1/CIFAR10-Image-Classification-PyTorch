@@ -13,8 +13,40 @@ from dataset.dataset import Cifar10SearchDataset
 from utils.test import *
 from utils.train import *
 from torch_lr_finder import LRFinder
+import torchvision
 
 
+def plot_losses(train_losses,train_acc,test_losses,test_acc):
+    fig, axs = plt.subplots(2,2,figsize=(15,10))
+    axs[0, 0].plot(train_losses)
+    axs[0, 0].set_title("Training Loss")
+    axs[1, 0].plot(train_acc)
+    axs[1, 0].set_title("Training Accuracy")
+    axs[0, 1].plot(test_losses)
+    axs[0, 1].set_title("Test Loss")
+    axs[1, 1].plot(test_acc)
+    axs[1, 1].set_title("Test Accuracy")
+
+def get_transforms(means, stds):
+  train_transforms = A.Compose(
+      [
+          A.Normalize(mean=means, std=stds, always_apply=True),
+          A.PadIfNeeded(min_height=36, min_width=36, always_apply=True),
+          A.RandomCrop(height=32, width=32, always_apply=True),
+          A.HorizontalFlip(),
+          A.CoarseDropout(max_holes=1, max_height=8, max_width=8, min_holes=1, min_height=8, min_width=8, fill_value=means),
+          ToTensorV2(),
+      ]
+  )
+
+  test_transforms = A.Compose(
+      [
+          A.Normalize(mean=means, std=stds, always_apply=True),
+          ToTensorV2(),
+      ]
+  )
+
+  return(train_transforms, test_transforms)
 
 
 def get_stats(trainloader):
@@ -44,21 +76,7 @@ def get_stats(trainloader):
   return([mean, std])
 
 
-def get_loader(transform=None, train=True):
-  """
-  Args:
-      transform (transform): Albumentations transform
-  Returns:
-      loader: DataLoader Object
-  """
-  if transform:
-    trainset = Cifar10SearchDataset(transform=transform)
-  else:
-    trainset = Cifar10SearchDataset(root="~/data/cifar10", train=train,
-                                    download=True)
-  loader = torch.utils.data.DataLoader(trainset, batch_size=512,
-                                       shuffle=train, num_workers=2)
-  return(loader)
+
 
 
 def get_summary(model, device):
@@ -68,23 +86,6 @@ def get_summary(model, device):
       device (str): cuda/CPU
   """
   print(summary(model, input_size=(3, 32, 32)))
-
-class UnNormalize(object):
-    def __init__(self, mean, std):
-        self.mean = mean
-        self.std = std
-
-    def __call__(self, tensor):
-        """
-        Args:
-            tensor (Tensor): Tensor image of size (C, H, W) to be normalized.
-        Returns:
-            Tensor: Normalized image.
-        """
-        for t, m, s in zip(tensor, self.mean, self.std):
-            t.mul_(s).add_(m)
-            # The normalize code -> t.sub_(m).div_(s)
-        return tensor
 
 def get_device():
   """
@@ -178,15 +179,3 @@ def LR_Finder(model, criterion, optimizer, trainloader):
   lr_finder.reset()
   
   return(max_lr[1])
-
-
-def train_model(model, device, trainloader, testloader, criterion, scheduler, optimizer, EPOCHS, metric):
-  
-  train_losses, train_acc = [], []
-  test_losses, test_acc = [], []
-
-  for epoch in range(EPOCHS):
-      print("EPOCH:", epoch)
-
-      train(model, device, trainloader, epoch, criterion, scheduler, optimizer, [train_losses, train_acc])
-      test(model, device, testloader, criterion, [test_losses, test_acc])
