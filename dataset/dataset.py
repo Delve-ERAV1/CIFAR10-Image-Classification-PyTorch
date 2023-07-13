@@ -1,6 +1,6 @@
 import torchvision
 
-class Cifar10Dataset(torchvision.datasets.CIFAR10):
+class CIFAR10Dataset(torchvision.datasets.CIFAR10):
     def __init__(self, root="~/data/cifar10", train=True, download=True, transform=None):
         super().__init__(root=root, train=train, download=download, transform=transform)
 
