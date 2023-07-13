@@ -5,44 +5,23 @@ from albumentations.pytorch import ToTensorV2
 
 
 
-def get_train_transform(mu, sigma):
-
-    """
-    Args:
-        tensor (Tensor): Tensor image of size (C, H, W) to be normalized.
-    Returns:
-        Tensor: Normalized image.
-    """
-    train_transform = A.Compose(
-      [ 
-          A.Normalize(mean=mu, std=sigma, always_apply=True),
-          A.RandomCrop(height=32, width=32, padding=4, padding_mode='reflect', always_apply=True),
+def get_transforms(means, stds):
+  train_transforms = A.Compose(
+      [
+          A.Normalize(mean=means, std=stds, always_apply=True),
+          A.PadIfNeeded(min_height=36, min_width=36, always_apply=True),
+          A.RandomCrop(height=32, width=32, always_apply=True),
           A.HorizontalFlip(),
-          A.Cutout(fill_value=mu),
+          A.CoarseDropout(max_holes=1, max_height=8, max_width=8, min_holes=1, min_height=8, min_width=8, fill_value=means),
           ToTensorV2(),
       ]
   )
 
-    return(train_transform)
+  test_transforms = A.Compose(
+      [
+          A.Normalize(mean=means, std=stds, always_apply=True),
+          ToTensorV2(),
+      ]
+  )
 
-
-
-def get_test_transform(mu, sigma):
-    """
-    Args:
-        tensor (Tensor): Tensor image of size (C, H, W) to be normalized.
-    Returns:
-        Tensor: Normalized image.
-        """
-    test_transform = A.Compose([
-                            A.Normalize(
-                                mean=(mu),
-                                std=(sigma)),
-                            ToTensorV2(),
-])
-    return(test_transform)
-
-
-
-def no_transform():
-    return(A.Compose([A.Normalize()]))
+  return(train_transforms, test_transforms)
