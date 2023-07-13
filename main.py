@@ -1,6 +1,7 @@
 from model.network import *
 from utils.utils import *
 from augment.augment import *
+from dataset.dataset import *
 import torchvision
 import torch.nn as nn
 import torch.optim as optim
@@ -18,49 +19,81 @@ dropout = config["model_params"]["dropout"]
 seed = config["model_params"]["seed"]
 epochs = config["training_params"]["epochs"]
 
-trainloader = get_loader(transform=None)
-mean, std = get_stats(trainloader)
-denorm = UnNormalize(mean, std)
+
+#####################################
+
+SEED = 42
+cuda = torch.cuda.is_available()
+print("CUDA Available?", cuda)
+
+# For reproducibility
+torch.manual_seed(SEED)
+
+if cuda:
+  torch.cuda.manual_seed(SEED)
+
+# dataloader arguments
+dataloader_args = dict(shuffle=True, batch_size=batch_size, num_workers=2, pin_memory=True) if cuda else dict(shuffle=True, batch_size=64)
 
 
-train_transform = get_train_transform(mean, std)
-test_transform = get_test_transform(mean, std)
+train = CIFAR10Dataset(transform=None)
+train_loader = torch.utils.data.DataLoader(train, **dataloader_args)
+mu, std = get_stats(train_loader)
+train_transforms, test_transforms = get_transforms(mu, std)
 
-trainloader = get_loader(transform=train_transform)
-testloader = get_loader(transform=test_transform, train=False)
+# train dataloader
+train = CIFAR10Dataset(transform=train_transforms)
+train_loader = torch.utils.data.DataLoader(train, **dataloader_args)
+
+
+# test dataloader
+test = CIFAR10Dataset(transform = test_transforms, train=False)
+test_loader = torch.utils.data.DataLoader(test, **dataloader_args)
+
+
+# get some random training images
+images, labels = next(iter(train_loader))
+classes = ('plane', 'car', 'bird', 'cat','deer', 'dog', 'frog', 'horse', 'ship', 'truck')
+
+
+# show images
+imshow(torchvision.utils.make_grid(images[:4]))
+# print labels
+print(' '.join(f'{classes[labels[j]]:5s}' for j in range(4)))
+
+
+###########################
 
 device = get_device()
 
-# get some random training images
-dataiter = iter(trainloader)
-images, labels = next(dataiter)
-
-# show images
-imshow(torchvision.utils.make_grid(images))
-# print labels
-print(' '.join('%5s' % classes[labels[j]] for j in range(4)))
 
 model = CustomResNet().to(device)
 print(get_summary(model, device))
 
-
-model = CustomResNet().to(device)
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=0.001, weight_decay=1e-4)
 
-max_lr = LR_Finder(model, criterion, optimizer, trainloader)
+max_lr = LR_Finder(model, criterion, optimizer, train_loader)
 print(f"Max LR @ {max_lr}")
 
 
 scheduler = OneCycleLR(optimizer, max_lr=max_lr, 
-                       epochs=epochs, steps_per_epoch=len(trainloader), 
+                       epochs=epochs, steps_per_epoch=len(train_loader), 
                        pct_start=5/epochs,
                        div_factor=100,
                        three_phase=False,
                        )
 
 def main():
-    train_model(model, device, trainloader, testloader, criterion, scheduler, optimizer, epochs, max_lr)
+  
+    train_losses, train_acc = [], []
+    test_losses, test_acc = [], []
+
+    for epoch in range(EPOCHS):
+        print("EPOCH:", epoch)
+
+        train(model, device, train_loader, criterion, scheduler, optimizer, [train_losses, train_acc])
+        test(model, device, test_loader, criterion, [test_losses, test_acc])
 
 
 if __name__ == "__main__":
