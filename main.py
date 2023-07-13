@@ -9,6 +9,9 @@ from torch.optim.lr_scheduler import OneCycleLR
 from pprint import pprint
 from torch_lr_finder import LRFinder
 
+from utils.test import test as m_test
+from utils.train import train as m_train
+
 config = process_config("utils/config.yml")
 pprint(config)
 
@@ -86,14 +89,10 @@ scheduler = OneCycleLR(optimizer, max_lr=max_lr,
 
 def main():
   
-    train_losses, train_acc = [], []
-    test_losses, test_acc = [], []
-
-    for epoch in range(EPOCHS):
+    for epoch in range(epochs):
         print("EPOCH:", epoch)
-
-        train(model, device, train_loader, criterion, scheduler, optimizer, [train_losses, train_acc])
-        test(model, device, test_loader, criterion, [test_losses, test_acc])
+        m_train(model, device, train_loader, optimizer, criterion, scheduler)
+        m_test(model, device, test_loader, criterion)
 
 
 if __name__ == "__main__":
