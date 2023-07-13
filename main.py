@@ -1,6 +1,6 @@
 from model.network import *
 from utils.utils import *
-from augment import *
+from augment.augment import *
 import torchvision
 import torch.nn as nn
 import torch.optim as optim
@@ -8,7 +8,7 @@ from torch.optim.lr_scheduler import OneCycleLR
 from pprint import pprint
 from torch_lr_finder import LRFinder
 
-config = process_config("utils/config.yaml")
+config = process_config("utils/config.yml")
 pprint(config)
 
 classes = config["data_loader"]["classes"]
