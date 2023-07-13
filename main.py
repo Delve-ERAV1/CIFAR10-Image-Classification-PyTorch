@@ -40,11 +40,11 @@ imshow(torchvision.utils.make_grid(images))
 # print labels
 print(' '.join('%5s' % classes[labels[j]] for j in range(4)))
 
-model = ResNet().to(device)
+model = CustomResNet().to(device)
 print(get_summary(model, device))
 
 
-model = ResNet().to(device)
+model = CustomResNet().to(device)
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=0.001, weight_decay=1e-4)
 
