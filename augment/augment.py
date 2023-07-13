@@ -14,10 +14,9 @@ def get_train_transform(mu, sigma):
         Tensor: Normalized image.
     """
     train_transform = A.Compose(
-      [
+      [ 
           A.Normalize(mean=mu, std=sigma, always_apply=True),
-          A.PadIfNeeded(min_height=36, min_width=36, always_apply=True),
-          A.RandomCrop(height=32, width=32, always_apply=True),
+          A.RandomCrop(height=32, width=32, padding=4, padding_mode='reflect', always_apply=True),
           A.HorizontalFlip(),
           A.Cutout(fill_value=mu),
           ToTensorV2(),
