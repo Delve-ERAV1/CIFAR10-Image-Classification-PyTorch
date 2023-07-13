@@ -8,10 +8,9 @@ import matplotlib.pyplot as plt
 import torch.nn.functional as F
 from torchsummary import summary
 from albumentations.pytorch import ToTensorV2
-from dataset.dataset import Cifar10SearchDataset 
+from dataset.dataset import * 
+import torch.optim as optim
 
-from utils.test import *
-from utils.train import *
 from torch_lr_finder import LRFinder
 import torchvision
 
@@ -152,7 +151,7 @@ def plot_metrics(metrics):
 def LR_Finder(model, criterion, optimizer, trainloader):
 
   lr_finder = LRFinder(model, optimizer, criterion, device="cuda")
-  lr_finder.range_test(trainloader, end_lr=1, num_iter=200)
+  lr_finder.range_test(trainloader, end_lr=10, num_iter=200, step_mode='exp')
   max_lr = lr_finder.plot(suggest_lr=True, skip_start=0, skip_end=0)
   lr_finder.reset()
   
