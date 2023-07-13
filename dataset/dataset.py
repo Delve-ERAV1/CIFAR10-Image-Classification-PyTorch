@@ -1,6 +1,6 @@
 import torchvision
 
-class Cifar10SearchDataset(torchvision.datasets.CIFAR10):
+class Cifar10Dataset(torchvision.datasets.CIFAR10):
     def __init__(self, root="~/data/cifar10", train=True, download=True, transform=None):
         super().__init__(root=root, train=train, download=download, transform=transform)
 
@@ -12,7 +12,3 @@ class Cifar10SearchDataset(torchvision.datasets.CIFAR10):
             image = transformed["image"]
 
         return image, label
-
-
-
-
